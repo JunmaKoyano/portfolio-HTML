@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>思い出フォトモザイク｜写真で文字や絵を描く</title>
+<style>
+  :root{
+    --bg:#0f0d0c;
+    --panel:#1a1614;
+    --panel2:#241e1a;
+    --line:#3a2f28;
+    --text:#f3ece4;
+    --muted:#b6a89a;
+    --accent:#e8a598;
+    --accent2:#d9748a;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #2a201c 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.6;
+    min-height:100vh;
+  }
+  header{
+    text-align:center;
+    padding:28px 16px 8px;
+  }
+  header h1{
+    font-size:clamp(20px,4.5vw,30px);
+    margin:0 0 6px;
+    letter-spacing:.02em;
+  }
+  header h1 .heart{color:var(--accent2)}
+  header p{margin:0;color:var(--muted);font-size:14px}
+  .wrap{
+    max-width:1180px;margin:0 auto;padding:14px 16px 60px;
+    display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;
+  }
+  @media (max-width:860px){ .wrap{grid-template-columns:1fr} }
+
+  .panel{
+    background:linear-gradient(180deg,var(--panel) 0%, #16110f 100%);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+  .controls{position:sticky;top:12px}
+  @media (max-width:860px){ .controls{position:static} }
+
+  .step{margin-bottom:18px}
+  .step:last-child{margin-bottom:0}
+  .step h2{
+    font-size:13px;margin:0 0 8px;color:var(--accent);
+    text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+    display:flex;align-items:center;gap:8px;
+  }
+  .step h2 .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:20px;height:20px;border-radius:50%;background:var(--accent2);color:#fff;
+    font-size:12px;font-weight:700;
+  }
+
+  .drop{
+    border:2px dashed var(--line);border-radius:12px;padding:18px 12px;text-align:center;
+    color:var(--muted);cursor:pointer;transition:.15s;background:var(--panel2);
+  }
+  .drop:hover,.drop.drag{border-color:var(--accent);color:var(--text);background:#2c231e}
+  .drop strong{color:var(--text)}
+  .drop small{display:block;margin-top:4px;font-size:12px}
+
+  .thumbs{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;max-height:120px;overflow:auto}
+  .thumbs img{width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+  .count{font-size:12px;color:var(--muted);margin-top:6px}
+  .count b{color:var(--accent)}
+
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tab{
+    flex:1;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);
+    color:var(--muted);cursor:pointer;text-align:center;font-size:13px;transition:.15s;
+  }
+  .tab.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+
+  label.field{display:block;margin-bottom:12px}
+  label.field .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+  label.field .lab b{color:var(--text);font-variant-numeric:tabular-nums}
+  input[type=text],textarea,select{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit;
+  }
+  textarea{resize:vertical;min-height:52px}
+  input[type=range]{width:100%;accent-color:var(--accent2)}
+  input[type=color]{width:100%;height:34px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px;cursor:pointer}
+
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+
+  .toggles{display:flex;flex-wrap:wrap;gap:8px}
+  .toggle{
+    display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;
+  }
+  .toggle input{accent-color:var(--accent2)}
+
+  .btns{display:flex;gap:10px;margin-top:6px}
+  button.act{
+    flex:1;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;
+    font-family:inherit;transition:.15s;
+  }
+  button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#2a1418}
+  button.primary:hover{filter:brightness(1.08)}
+  button.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  button.ghost:hover{border-color:var(--accent)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+
+  .stage{
+    background:
+      linear-gradient(45deg,#151110 25%,transparent 25%,transparent 75%,#151110 75%),
+      linear-gradient(45deg,#151110 25%,#1d1815 25%,#1d1815 75%,#151110 75%);
+    background-size:22px 22px;background-position:0 0,11px 11px;
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;min-height:340px;display:flex;align-items:center;justify-content:center;
+  }
+  .stage canvas{max-width:100%;height:auto;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+  .placeholder{color:var(--muted);text-align:center;padding:40px 20px}
+  .placeholder .big{font-size:44px;margin-bottom:10px;opacity:.6}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+  .busy{color:var(--accent);font-size:13px;margin-top:8px;text-align:center;height:16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>思い出フォトモザイク <span class="heart">♥</span></h1>
+  <p>たくさんの写真を素材に、文字や絵を浮かび上がらせる。記念日のひと品に。</p>
+</header>
+
+<div class="wrap">
+  <!-- 左：操作パネル -->
+  <div class="panel controls">
+    <!-- STEP 1 写真 -->
+    <div class="step">
+      <h2><span class="num">1</span>思い出の写真を選ぶ</h2>
+      <div class="drop" id="drop">
+        <strong>写真をドラッグ＆ドロップ</strong>
+        <small>またはタップして選択（何枚でも／複数選択OK）</small>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" multiple hidden>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="count" id="count">写真：<b>0</b> 枚</div>
+    </div>
+
+    <!-- STEP 2 浮かび上がらせるもの -->
+    <div class="step">
+      <h2><span class="num">2</span>浮かび上がらせるもの</h2>
+      <div class="tabs">
+        <div class="tab active" data-mode="text">文字</div>
+        <div class="tab" data-mode="image">絵・画像</div>
+      </div>
+
+      <div id="textPane">
+        <label class="field">
+          <span class="lab">テキスト（改行で複数行）</span>
+          <textarea id="text" placeholder="LOVE&#10;2024.10.20">LOVE</textarea>
+        </label>
+        <div class="row">
+          <label class="field">
+            <span class="lab">フォント</span>
+            <select id="font">
+              <option value="Georgia, 'Times New Roman', serif">セリフ（上品）</option>
+              <option value="'Hiragino Kaku Gothic ProN','Yu Gothic',Meiryo,sans-serif">ゴシック（太字向き）</option>
+              <option value="'Brush Script MT','Segoe Script',cursive">筆記体</option>
+              <option value="Impact,'Arial Black',sans-serif">極太</option>
+            </select>
+          </label>
+          <label class="field" style="max-width:110px">
+            <span class="lab">太さ</span>
+            <select id="weight">
+              <option value="400">標準</option>
+              <option value="700" selected>太字</option>
+              <option value="900">極太</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div id="imagePane" style="display:none">
+        <div class="drop" id="targetDrop">
+          <strong>下絵をアップロード</strong>
+          <small>ハート・シルエット・手描きの絵など（黒い部分が浮かび上がる）</small>
+        </div>
+        <input type="file" id="targetInput" accept="image/*" hidden>
+        <div class="count" id="targetName" style="margin-top:8px">画像：<b>未選択</b></div>
+        <label class="toggle" style="margin-top:8px">
+          <input type="checkbox" id="targetInvert"> 明暗を反転（明るい部分を浮かせる）
+        </label>
+      </div>
+    </div>
+
+    <!-- STEP 3 調整 -->
+    <div class="step">
+      <h2><span class="num">3</span>仕上がりを調整</h2>
+      <label class="field">
+        <span class="lab">写真の細かさ（タイル数） <b id="colsV">54</b></span>
+        <input type="range" id="cols" min="16" max="120" value="54">
+      </label>
+      <label class="field">
+        <span class="lab">形の濃さ <b id="darkV">0.78</b></span>
+        <input type="range" id="dark" min="0" max="1" step="0.01" value="0.78">
+      </label>
+      <label class="field">
+        <span class="lab">背景の淡さ <b id="fadeV">0.74</b></span>
+        <input type="range" id="fade" min="0" max="1" step="0.01" value="0.74">
+      </label>
+      <label class="field">
+        <span class="lab">形のくっきり感（コントラスト） <b id="edgeV">0.55</b></span>
+        <input type="range" id="edge" min="0" max="1" step="0.01" value="0.55">
+      </label>
+
+      <div class="toggles" style="margin-bottom:12px">
+        <label class="toggle"><input type="checkbox" id="invert"> 反転</label>
+        <label class="toggle"><input type="checkbox" id="bgMono" checked> 背景モノクロ</label>
+        <label class="toggle"><input type="checkbox" id="shuffle" checked> シャッフル</label>
+      </div>
+
+      <div class="row">
+        <label class="field">
+          <span class="lab">背景（紙）の色</span>
+          <input type="color" id="paper" value="#f4efe6">
+        </label>
+        <label class="field" style="max-width:120px">
+          <span class="lab">書き出し画質 <b id="scaleV">2x</b></span>
+          <input type="range" id="scale" min="1" max="4" step="1" value="2">
+        </label>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="act primary" id="gen">✨ 生成する</button>
+      <button class="act ghost" id="download" disabled>⬇ 保存</button>
+    </div>
+    <div class="busy" id="busy"></div>
+  </div>
+
+  <!-- 右：プレビュー -->
+  <div class="panel">
+    <div class="stage" id="stage">
+      <div class="placeholder" id="placeholder">
+        <div class="big">🖼️♥</div>
+        写真を選んで「生成する」を押すと<br>ここに作品が表示されます
+      </div>
+      <canvas id="canvas" style="display:none"></canvas>
+    </div>
+    <div class="hint">プレビューはブラウザ内だけで作られ、写真が外部に送られることはありません。</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+
+  // ---- 状態 ----
+  const photos = [];      // {img, aspect}
+  let targetImg = null;   // 下絵画像
+  let inputMode = "text";
+  let rafPending = false;
+
+  // ---- 写真の読み込み ----
+  const drop = $("drop"), photoInput = $("photoInput");
+  drop.addEventListener("click", () => photoInput.click());
+  ;["dragover","dragenter"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("drag");}));
+  ;["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("drag");}));
+  drop.addEventListener("drop", ev => addPhotos(ev.dataTransfer.files));
+  photoInput.addEventListener("change", ev => addPhotos(ev.target.files));
+
+  function addPhotos(fileList){
+    const files = [...fileList].filter(f => f.type.startsWith("image/"));
+    if(!files.length) return;
+    let remaining = files.length;
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        photos.push({img, aspect: img.width/img.height});
+        const t = document.createElement("img");
+        t.src = url;
+        $("thumbs").appendChild(t);
+        $("count").innerHTML = "写真：<b>"+photos.length+"</b> 枚";
+        if(--remaining===0) scheduleRender();
+      };
+      img.onerror = () => { if(--remaining===0) scheduleRender(); };
+      img.src = url;
+    });
+  }
+
+  // ---- タブ切り替え ----
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+      inputMode = tab.dataset.mode;
+      $("textPane").style.display  = inputMode==="text"  ? "" : "none";
+      $("imagePane").style.display = inputMode==="image" ? "" : "none";
+      scheduleRender();
+    });
+  });
+
+  // ---- 下絵の読み込み ----
+  const targetDrop = $("targetDrop"), targetInput = $("targetInput");
+  targetDrop.addEventListener("click", () => targetInput.click());
+  ;["dragover","dragenter"].forEach(e=>targetDrop.addEventListener(e,ev=>{ev.preventDefault();targetDrop.classList.add("drag");}));
+  ;["dragleave","drop"].forEach(e=>targetDrop.addEventListener(e,ev=>{ev.preventDefault();targetDrop.classList.remove("drag");}));
+  targetDrop.addEventListener("drop", ev => loadTarget(ev.dataTransfer.files[0]));
+  targetInput.addEventListener("change", ev => loadTarget(ev.target.files[0]));
+  function loadTarget(file){
+    if(!file || !file.type.startsWith("image/")) return;
+    const img = new Image();
+    img.onload = () => { targetImg = img; $("targetName").innerHTML = "画像：<b>読み込み済み</b>"; scheduleRender(); };
+    img.src = URL.createObjectURL(file);
+  }
+
+  // ---- スライダー値の表示同期 ----
+  const sync = (id, el, fmt) => { const v=$(id); const upd=()=>{el.textContent=fmt(v.value);}; v.addEventListener("input",()=>{upd();scheduleRender();}); upd(); };
+  sync("cols",  $("colsV"),  v=>v);
+  sync("dark",  $("darkV"),  v=>(+v).toFixed(2));
+  sync("fade",  $("fadeV"),  v=>(+v).toFixed(2));
+  sync("edge",  $("edgeV"),  v=>(+v).toFixed(2));
+  sync("scale", $("scaleV"), v=>v+"x");
+  ["text","font","weight","invert","bgMono","shuffle","paper","targetInvert"].forEach(id=>{
+    $(id).addEventListener("input", scheduleRender);
+    $(id).addEventListener("change", scheduleRender);
+  });
+
+  $("gen").addEventListener("click", () => render(true));
+  $("download").addEventListener("click", downloadImage);
+
+  function scheduleRender(){
+    // 素材があるときは自動で軽くプレビュー更新
+    if(rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => { rafPending = false; if(photos.length) render(false); });
+  }
+
+  // ---- ユーティリティ：正方形カバー描画 ----
+  function drawCover(ctx, img, dx, dy, size){
+    const iw=img.width, ih=img.height;
+    let s = Math.min(iw, ih);
+    let sx=(iw-s)/2, sy=(ih-s)/2;
+    ctx.drawImage(img, sx, sy, s, s, dx, dy, size, size);
+  }
+
+  // ---- 下絵マスクの生成（cols×rows、値0..1：1=形の部分）----
+  function buildMask(cols){
+    // 出力アスペクトを決める
+    let aspect; // width/height
+    if(inputMode==="image" && targetImg){
+      aspect = targetImg.width/targetImg.height;
+    } else {
+      const lines = ($("text").value || "LOVE").split("\n").filter(l=>l.length);
+      const maxLen = Math.max(1, ...lines.map(l=>l.length));
+      // 文字数と行数からだいたいの比率を推定
+      aspect = Math.max(0.6, Math.min(3.2, (maxLen*0.62)/(lines.length||1)));
+    }
+    let rows = Math.max(8, Math.round(cols/aspect));
+
+    const S = 4; // スーパーサンプル
+    const big = document.createElement("canvas");
+    big.width = cols*S; big.height = rows*S;
+    const bx = big.getContext("2d");
+    bx.fillStyle = "#fff"; bx.fillRect(0,0,big.width,big.height);
+    bx.fillStyle = "#000";
+
+    if(inputMode==="image" && targetImg){
+      // 画像を内側にフィットで描く（余白は白＝背景）
+      const iw=targetImg.width, ih=targetImg.height;
+      const scale = Math.min(big.width/iw, big.height/ih);
+      const w=iw*scale, h=ih*scale, ox=(big.width-w)/2, oy=(big.height-h)/2;
+      bx.drawImage(targetImg, ox, oy, w, h);
+    } else {
+      const text = ($("text").value || "LOVE");
+      const lines = text.split("\n").filter(l=>l.length) ;
+      const n = lines.length || 1;
+      const padX = big.width*0.08, padY = big.height*0.10;
+      const availW = big.width - padX*2;
+      const availH = big.height - padY*2;
+      const lineH = availH / n;
+      bx.textAlign = "center";
+      bx.textBaseline = "middle";
+      const family = $("font").value;
+      const weight = $("weight").value;
+      lines.forEach((line, i) => {
+        // 各行を幅に合わせてフォントサイズ決定
+        let fs = lineH*0.92;
+        bx.font = `${weight} ${fs}px ${family}`;
+        let w = bx.measureText(line).width;
+        if(w > availW){ fs *= availW/w; bx.font = `${weight} ${fs}px ${family}`; }
+        const y = padY + lineH*(i+0.5);
+        bx.fillText(line, big.width/2, y);
+      });
+    }
+
+    // cols×rows へ縮小平均
+    const small = document.createElement("canvas");
+    small.width=cols; small.height=rows;
+    const sx = small.getContext("2d");
+    sx.imageSmoothingEnabled = true;
+    sx.drawImage(big, 0, 0, cols, rows);
+    const data = sx.getImageData(0,0,cols,rows).data;
+
+    const mask = new Float32Array(cols*rows);
+    for(let i=0;i<cols*rows;i++){
+      const r=data[i*4], g=data[i*4+1], b=data[i*4+2];
+      const lum = (0.299*r+0.587*g+0.114*b)/255; // 1=白=背景, 0=黒=形
+      mask[i] = 1-lum; // 1=形
+    }
+    return {mask, cols, rows};
+  }
+
+  // コントラスト調整（0.5中心のスムーズステップ強度）
+  function applyContrast(m, edge){
+    if(edge<=0) return m;
+    // edge 0..1 -> 傾き。smoothstep 状に中心を引き締める
+    const k = 1 + edge*6;
+    const x = (m-0.5)*k + 0.5;
+    return Math.max(0, Math.min(1, x));
+  }
+
+  // ---- メイン描画 ----
+  function render(force){
+    const canvas = $("canvas"), placeholder = $("placeholder");
+    if(!photos.length){
+      canvas.style.display="none"; placeholder.style.display="";
+      $("download").disabled = true;
+      return;
+    }
+    $("busy").textContent = "生成中…";
+
+    // 少し遅延させてUIを更新
+    setTimeout(() => {
+      const cols = +$("cols").value;
+      const {mask, rows} = buildMask(cols);
+      const scale = force ? (+$("scale").value) : 1; // プレビューは等倍で軽く
+      const cell = Math.max(6, Math.round((force?18:14) * scale / (force?1:1)));
+      // 実セルサイズ：書き出し時は scale を反映して大きく
+      const cellSize = force ? 16*scale : 14;
+
+      canvas.width  = cols*cellSize;
+      canvas.height = rows*cellSize;
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+
+      const paper = $("paper").value;
+      ctx.fillStyle = paper;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      const dark = +$("dark").value;
+      const fade = +$("fade").value;
+      const edge = +$("edge").value;
+      const invert = $("invert").checked;
+      const bgMono = $("bgMono").checked;
+      const doShuffle = $("shuffle").checked;
+
+      // 写真の割り当て順
+      const order = [];
+      for(let i=0;i<cols*rows;i++) order.push(i % photos.length);
+      if(doShuffle){
+        for(let i=order.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [order[i],order[j]]=[order[j],order[i]]; }
+      }
+
+      const paperRGB = hexToRgb(paper);
+
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const idx = r*cols+c;
+          let m = mask[idx];
+          if(invert) m = 1-m;
+          m = applyContrast(m, edge);
+
+          const dx = c*cellSize, dy = r*cellSize;
+          const photo = photos[order[idx]].img;
+
+          // 背景セルはモノクロ（形の部分ほど彩度を残す）
+          if(bgMono){
+            const gray = Math.round((1-m)*100); // 形=0%,背景=100%グレースケール
+            ctx.filter = `grayscale(${gray}%)`;
+          }
+          drawCover(ctx, photo, dx, dy, cellSize);
+          ctx.filter = "none";
+
+          // 形の部分：黒を重ねて濃くする
+          const aDark = m*dark;
+          if(aDark>0.001){
+            ctx.fillStyle = `rgba(0,0,0,${aDark})`;
+            ctx.fillRect(dx,dy,cellSize,cellSize);
+          }
+          // 背景部分：紙色を重ねて淡くする
+          const aFade = (1-m)*fade;
+          if(aFade>0.001){
+            ctx.fillStyle = `rgba(${paperRGB.r},${paperRGB.g},${paperRGB.b},${aFade})`;
+            ctx.fillRect(dx,dy,cellSize,cellSize);
+          }
+        }
+      }
+
+      canvas.style.display="";
+      placeholder.style.display="none";
+      $("download").disabled = false;
+      $("busy").textContent = force ? "完成しました ♥" : "";
+      if(force) setTimeout(()=>{$("busy").textContent="";}, 2200);
+    }, 15);
+  }
+
+  function hexToRgb(hex){
+    const n = parseInt(hex.slice(1),16);
+    return {r:(n>>16)&255, g:(n>>8)&255, b:n&255};
+  }
+
+  function downloadImage(){
+    // 保存は必ず高解像度で描き直す
+    render(true);
+    setTimeout(() => {
+      const a = document.createElement("a");
+      a.download = "photo-mosaic.png";
+      a.href = $("canvas").toDataURL("image/png");
+      a.click();
+    }, 120);
+  }
+})();
+</script>
+</body>
+</html>
