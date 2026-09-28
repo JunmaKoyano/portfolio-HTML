@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouTube 字幕リーダー</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">YouTube 字幕リーダー</h1>
+    <form id="url-form" class="url-form">
+      <input id="url-input" type="text" placeholder="YouTube の URL を貼り付け（例: https://www.youtube.com/watch?v=...）" autocomplete="off">
+      <button type="submit" class="btn primary">読み込む</button>
+    </form>
+    <button id="menu-btn" class="btn icon-btn" aria-label="履歴と単語帳">☰</button>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="tabs">
+        <button class="tab active" data-tab="history">履歴</button>
+        <button class="tab" data-tab="words">単語帳 <span id="word-count" class="badge">0</span></button>
+      </div>
+      <div id="tab-history" class="tab-panel">
+        <input id="history-search" class="search" type="search" placeholder="履歴を検索">
+        <ul id="history-list" class="list"></ul>
+        <p id="history-empty" class="empty">まだ履歴はありません。<br>動画の URL を貼り付けてみましょう。</p>
+      </div>
+      <div id="tab-words" class="tab-panel" hidden>
+        <ul id="word-list" class="list"></ul>
+        <p id="words-empty" class="empty">単語にカーソルを合わせて<br>「★ 保存」すると、ここに溜まります。</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section id="welcome" class="welcome">
+        <h2>英語の字幕を、読みやすい文章に。</h2>
+        <ol>
+          <li>上の欄に YouTube の URL を貼り付けて「読み込む」</li>
+          <li>字幕が段落ごとに整形されて表示されます</li>
+          <li>単語にカーソルを合わせると意味を表示（フレーズは選択で翻訳）</li>
+          <li>時刻をクリックするとその場面から再生</li>
+          <li>読み込んだ動画は自動で履歴に保存されます</li>
+        </ol>
+      </section>
+
+      <section id="paste-box" class="paste-box" hidden>
+        <p id="paste-reason" class="paste-reason"></p>
+        <details>
+          <summary>字幕テキストを貼り付けて整形する</summary>
+          <p class="hint">YouTube の動画ページで「…」→「文字起こしを表示」を開き、全文をコピーして貼り付けてください（タイムスタンプ付きのままでOK）。</p>
+          <textarea id="paste-input" rows="8" placeholder="0:00&#10;Hello everyone, welcome back to the channel..."></textarea>
+          <button id="paste-btn" class="btn primary">この字幕で整形する</button>
+        </details>
+      </section>
+
+      <section id="viewer" class="viewer" hidden>
+        <div class="player-col">
+          <div class="player-wrap"><div id="player"></div></div>
+          <div class="video-meta">
+            <h2 id="video-title"></h2>
+            <p id="video-info" class="muted"></p>
+          </div>
+          <div class="controls">
+            <label>文字サイズ <input id="font-size" type="range" min="14" max="28" step="1"></label>
+            <label><input id="follow-toggle" type="checkbox" checked> 再生位置を追う</label>
+            <button id="copy-btn" class="btn">全文コピー</button>
+          </div>
+        </div>
+        <article id="transcript" class="transcript"></article>
+      </section>
+    </main>
+  </div>
+
+  <div id="popup" class="popup" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="https://www.youtube.com/iframe_api" async></script>
+  <script src="app.js"></script>
+</body>
+</html>
